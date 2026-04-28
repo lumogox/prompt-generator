@@ -1,0 +1,10 @@
+global using System;
+global using System.Collections.Generic;
+global using System.Data;
+global using System.IO;
+global using System.Text.Json;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Microsoft.Data.Sqlite;
+global using PromptAssistant.Core.Abstractions;
+global using PromptAssistant.Core.Models;

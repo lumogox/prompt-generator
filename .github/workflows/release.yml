@@ -208,10 +208,11 @@ jobs:
             PRERELEASE_FLAG="--prerelease"
           fi
 
+          mapfile -t ASSETS < <(find dist -type f | sort)
           gh release create "$TAG" \
             --title "Prompt Assistant $TAG" \
             --notes-file release_notes.md \
             $PRERELEASE_FLAG \
-            dist/*
+            "${ASSETS[@]}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

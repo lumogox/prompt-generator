@@ -1,0 +1,223 @@
+# Release workflow — fires when Directory.Build.props is merged to main.
+#
+# Flow:
+#   check-version  →  build (macOS / Windows / Linux in parallel)  →  release
+#
+# To publish a new version:
+#   1. Bump <Version> in Directory.Build.props.
+#   2. Open a PR (write a proper changelog in the PR description).
+#   3. Merge — this workflow creates the tag and GitHub Release automatically.
+#
+# Pre-release: any version containing a hyphen (e.g. 1.1.0-beta.1) is
+# published as a GitHub pre-release and does NOT become "latest".
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Directory.Build.props
+
+# Never cancel a release that has already started uploading artifacts.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # needed to create tags and GitHub Releases
+
+# ─── Job 1: Extract version and guard against double-release ────────────────
+jobs:
+  check-version:
+    name: Check version
+    runs-on: ubuntu-latest
+    outputs:
+      version:       ${{ steps.extract.outputs.version }}
+      tag:           ${{ steps.extract.outputs.tag }}
+      is_prerelease: ${{ steps.extract.outputs.is_prerelease }}
+      should_release: ${{ steps.guard.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so changelog can walk back to previous tag
+
+      - name: Extract version
+        id: extract
+        run: |
+          VERSION=$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props)
+          if [ -z "$VERSION" ]; then
+            echo "::error::No <Version> element found in Directory.Build.props"
+            exit 1
+          fi
+          echo "version=$VERSION"        >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION"           >> "$GITHUB_OUTPUT"
+          # Semver pre-release: any version with a hyphen (1.0.0-beta.1, etc.)
+          if [[ "$VERSION" == *-* ]]; then
+            echo "is_prerelease=true"    >> "$GITHUB_OUTPUT"
+          else
+            echo "is_prerelease=false"   >> "$GITHUB_OUTPUT"
+          fi
+          echo "Detected version: $VERSION"
+
+      - name: Guard — skip if tag already exists
+        id: guard
+        run: |
+          TAG="v${{ steps.extract.outputs.version }}"
+          if git ls-remote --tags origin "refs/tags/$TAG" | grep -q .; then
+            echo "::notice::Tag $TAG already exists on remote — skipping release."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=true"  >> "$GITHUB_OUTPUT"
+          fi
+
+# ─── Job 2: Build on each native runner in parallel ─────────────────────────
+  build:
+    name: Build / ${{ matrix.platform }}
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
+    strategy:
+      fail-fast: false   # let all three builds finish even if one fails
+      matrix:
+        include:
+          - platform: macOS
+            runner:   macos-latest
+            runtime:  osx-arm64
+          - platform: Windows
+            runner:   windows-latest
+            runtime:  win-x64
+          - platform: Linux
+            runner:   ubuntu-latest
+            runtime:  linux-x64
+    runs-on: ${{ matrix.runner }}
+    env:
+      VERSION: ${{ needs.check-version.outputs.version }}
+      RUNTIME: ${{ matrix.runtime }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+
+      # NuGet cache — keyed on lock files so a clean restore still hits the cache.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ matrix.runtime }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
+          restore-keys: nuget-${{ matrix.runtime }}-
+
+      - name: Publish (macOS)
+        if: matrix.platform == 'macOS'
+        run: bash scripts/publish-mac.sh
+
+      - name: Publish (Windows)
+        if: matrix.platform == 'Windows'
+        shell: pwsh
+        run: ./scripts/publish-windows.ps1
+
+      - name: Publish (Linux)
+        if: matrix.platform == 'Linux'
+        run: bash scripts/publish-linux.sh
+
+      # Upload into a per-runtime named artifact; the release job merges them.
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.runtime }}
+          path: |
+            artifacts/dmg/*.dmg
+            artifacts/zip/*.zip
+            artifacts/tar/*.tar.gz
+          if-no-files-found: error
+          retention-days: 1   # only needed until the release job runs
+
+# ─── Job 3: Tag, generate changelog, publish GitHub Release ─────────────────
+  release:
+    name: Publish GitHub Release
+    needs: [check-version, build]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.check-version.outputs.version }}
+      TAG:     ${{ needs.check-version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Merge all three platform artifacts into a flat dist/ directory.
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+
+      - name: Verify artifacts
+        run: |
+          echo "Release assets:"
+          find dist -type f | sort
+          test "$(find dist -type f | wc -l)" -ge 3 || { echo "::error::Expected at least 3 artifacts"; exit 1; }
+
+      # Build a changelog from conventional commits since the previous tag.
+      # Falls back gracefully if this is the first release (no previous tag).
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -n "$PREV_TAG" ]; then
+            RANGE="$PREV_TAG..HEAD"
+          else
+            RANGE="HEAD"
+          fi
+
+          FEAT=$(git log "$RANGE" --no-merges --format="- %s" | grep '^- feat'     | sed 's/^- feat[^:]*: /- /' || true)
+          FIX=$(git log  "$RANGE" --no-merges --format="- %s" | grep '^- fix'      | sed 's/^- fix[^:]*: /- /'  || true)
+          OTHER=$(git log "$RANGE" --no-merges --format="- %s" \
+                  | grep -vE '^- (feat|fix)' \
+                  | grep -E '^- (build|chore|refactor|perf|docs|style|test|ci)' \
+                  | sed 's/^- [^:]*: /- /' || true)
+
+          {
+            if [ -n "$FEAT" ];  then printf "## What's New\n\n%s\n\n" "$FEAT";  fi
+            if [ -n "$FIX" ];   then printf "## Bug Fixes\n\n%s\n\n" "$FIX";   fi
+            if [ -n "$OTHER" ]; then printf "## Other\n\n%s\n\n" "$OTHER"; fi
+
+            printf "## Installation\n\n"
+            printf "| Platform | Download | How to install |\n"
+            printf "|---|---|---|\n"
+            printf "| **macOS** (Apple Silicon) | \`PromptAssistant-%s-osx-arm64.dmg\` | Open DMG → drag **Prompt Assistant.app** to Applications |\n" "$VERSION"
+            printf "| **Windows** (x64)         | \`PromptAssistant-%s-win-x64.zip\`  | Extract zip → run \`PromptAssistant.Desktop.exe\` |\n" "$VERSION"
+            printf "| **Linux** (x64)           | \`PromptAssistant-%s-linux-x64.tar.gz\` | \`tar -xzf\` then \`./PromptAssistant.Desktop\` |\n\n" "$VERSION"
+
+            printf "> **macOS:** right-click → Open on first launch (unsigned bundle).\n"
+            printf "> **Windows:** SmartScreen may warn — click More info → Run anyway.\n"
+            printf "> **Linux:** requires \`libX11\`, \`libGL\`, and \`libfontconfig\` (pre-installed on all standard desktop distros).\n"
+          } > release_notes.md
+
+          echo "Release notes preview:"
+          cat release_notes.md
+
+      # Push the tag from CI so the release is always tied to the exact commit
+      # that bumped the version — not to a later amendment.
+      - name: Create and push tag
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+
+      - name: Create GitHub Release
+        run: |
+          PRERELEASE_FLAG=""
+          if [ "${{ needs.check-version.outputs.is_prerelease }}" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release create "$TAG" \
+            --title "Prompt Assistant $TAG" \
+            --notes-file release_notes.md \
+            $PRERELEASE_FLAG \
+            dist/*
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,39 @@
+# ─── .NET build output ──────────────────────────────────────────────────────
+bin/
+obj/
+out/
+*.binlog
+
+# ─── Publish / packaging artifacts ──────────────────────────────────────────
+artifacts/
+publish/
+*.dmg
+*.pkg
+*.app/
+
+# ─── IDE & editor ───────────────────────────────────────────────────────────
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+
+# ─── Test output ────────────────────────────────────────────────────────────
+TestResults/
+*.trx
+coverage.*
+*.coverage
+
+# ─── Local DB / runtime artifacts ───────────────────────────────────────────
+*.db
+*.db-journal
+*.log
+
+# ─── NuGet local caches ─────────────────────────────────────────────────────
+.nuget/
+*.nupkg
+
+# ─── OS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

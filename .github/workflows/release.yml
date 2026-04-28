@@ -38,7 +38,7 @@ jobs:
       is_prerelease: ${{ steps.extract.outputs.is_prerelease }}
       should_release: ${{ steps.guard.outputs.should_release }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0   # full history so changelog can walk back to previous tag
 
@@ -94,14 +94,14 @@ jobs:
       VERSION: ${{ needs.check-version.outputs.version }}
       RUNTIME: ${{ matrix.runtime }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.x'
 
       # NuGet cache — keyed on lock files so a clean restore still hits the cache.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.nuget/packages
           key: nuget-${{ matrix.runtime }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props') }}
@@ -122,7 +122,7 @@ jobs:
 
       # Upload into a per-runtime named artifact; the release job merges them.
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.runtime }}
           path: |
@@ -141,12 +141,12 @@ jobs:
       VERSION: ${{ needs.check-version.outputs.version }}
       TAG:     ${{ needs.check-version.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       # Merge all three platform artifacts into a flat dist/ directory.
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: dist-*
           path: dist

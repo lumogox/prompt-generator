@@ -26,7 +26,6 @@ concurrency:
 
 permissions:
   contents: write   # needed to create tags and GitHub Releases
-  workflows: write  # needed to tag commits that contain workflow file changes
 
 # ─── Job 1: Extract version and guard against double-release ────────────────
 jobs:
@@ -199,16 +198,10 @@ jobs:
           echo "Release notes preview:"
           cat release_notes.md
 
-      # Push the tag from CI so the release is always tied to the exact commit
-      # that bumped the version — not to a later amendment.
-      - name: Create and push tag
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag "$TAG" -m "Release $TAG"
-          git push origin "$TAG"
-
       - name: Create GitHub Release
+        # gh release create creates the tag via the GitHub API when it doesn't
+        # exist yet — no git push needed, so the workflow-file restriction on
+        # GITHUB_TOKEN does not apply.
         run: |
           PRERELEASE_FLAG=""
           if [ "${{ needs.check-version.outputs.is_prerelease }}" = "true" ]; then

@@ -26,6 +26,7 @@ concurrency:
 
 permissions:
   contents: write   # needed to create tags and GitHub Releases
+  workflows: write  # needed to tag commits that contain workflow file changes
 
 # ─── Job 1: Extract version and guard against double-release ────────────────
 jobs:

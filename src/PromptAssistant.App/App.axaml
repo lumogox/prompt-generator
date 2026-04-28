@@ -1,0 +1,240 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:PromptAssistant.App.Converters"
+             x:Class="PromptAssistant.App.App"
+             RequestedThemeVariant="Light">
+
+    <Application.Resources>
+        <ResourceDictionary>
+
+            <converters:SectionKindToBrushConverter x:Key="SectionKindToBrush"/>
+            <converters:HealthToBrushConverter x:Key="HealthToBrush"/>
+
+            <!-- ═════════════════════════════════════════════════════════
+                 Palette — paper-warm minimalism
+                 ═════════════════════════════════════════════════════════ -->
+            <Color x:Key="PaperColor">#FAF7F0</Color>
+            <Color x:Key="PaperWarmColor">#F2EDE0</Color>
+            <Color x:Key="InkColor">#1A1814</Color>
+            <Color x:Key="MutedInkColor">#5C544A</Color>
+            <Color x:Key="FaintInkColor">#8A8174</Color>
+            <Color x:Key="HairlineColor">#D9D0BD</Color>
+            <Color x:Key="HairlineSoftColor">#E8E1D2</Color>
+            <Color x:Key="AccentColor">#B85440</Color>
+            <Color x:Key="AccentDeepColor">#8E3D2C</Color>
+            <Color x:Key="AccentSoftColor">#EAD2C7</Color>
+
+            <SolidColorBrush x:Key="PaperBrush" Color="{StaticResource PaperColor}"/>
+            <SolidColorBrush x:Key="PaperWarmBrush" Color="{StaticResource PaperWarmColor}"/>
+            <SolidColorBrush x:Key="InkBrush" Color="{StaticResource InkColor}"/>
+            <SolidColorBrush x:Key="MutedInkBrush" Color="{StaticResource MutedInkColor}"/>
+            <SolidColorBrush x:Key="FaintInkBrush" Color="{StaticResource FaintInkColor}"/>
+            <SolidColorBrush x:Key="HairlineBrush" Color="{StaticResource HairlineColor}"/>
+            <SolidColorBrush x:Key="HairlineSoftBrush" Color="{StaticResource HairlineSoftColor}"/>
+            <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+            <SolidColorBrush x:Key="AccentDeepBrush" Color="{StaticResource AccentDeepColor}"/>
+            <SolidColorBrush x:Key="AccentSoftBrush" Color="{StaticResource AccentSoftColor}"/>
+
+            <!-- ═════════════════════════════════════════════════════════
+                 Section palette — paper-warm pastels, one per kind.
+                 Used for the structured assembled-prompt visualization.
+                 ═════════════════════════════════════════════════════════ -->
+            <SolidColorBrush x:Key="Section.TaskContext.Bg" Color="#F4E1D2"/>
+            <SolidColorBrush x:Key="Section.TaskContext.Fg" Color="#7A4827"/>
+
+            <SolidColorBrush x:Key="Section.ToneContext.Bg" Color="#F8E9C9"/>
+            <SolidColorBrush x:Key="Section.ToneContext.Fg" Color="#7C5E1F"/>
+
+            <SolidColorBrush x:Key="Section.BackgroundData.Bg" Color="#E0EBD8"/>
+            <SolidColorBrush x:Key="Section.BackgroundData.Fg" Color="#3E5C2C"/>
+
+            <SolidColorBrush x:Key="Section.TaskRules.Bg" Color="#D8E5DD"/>
+            <SolidColorBrush x:Key="Section.TaskRules.Fg" Color="#2E5742"/>
+
+            <SolidColorBrush x:Key="Section.Examples.Bg" Color="#D6E2EF"/>
+            <SolidColorBrush x:Key="Section.Examples.Fg" Color="#2D4D75"/>
+
+            <SolidColorBrush x:Key="Section.ConversationHistory.Bg" Color="#E3DCEC"/>
+            <SolidColorBrush x:Key="Section.ConversationHistory.Fg" Color="#4D3D6B"/>
+
+            <SolidColorBrush x:Key="Section.ImmediateRequest.Bg" Color="#F0DAD8"/>
+            <SolidColorBrush x:Key="Section.ImmediateRequest.Fg" Color="#7A2E2F"/>
+
+            <SolidColorBrush x:Key="Section.StepByStep.Bg" Color="#F0E2DE"/>
+            <SolidColorBrush x:Key="Section.StepByStep.Fg" Color="#6E3F36"/>
+
+            <SolidColorBrush x:Key="Section.OutputFormatting.Bg" Color="#E8E5DE"/>
+            <SolidColorBrush x:Key="Section.OutputFormatting.Fg" Color="#4A4438"/>
+
+            <SolidColorBrush x:Key="Section.AssistantPrefill.Bg" Color="#DBD8CF"/>
+            <SolidColorBrush x:Key="Section.AssistantPrefill.Fg" Color="#3A352C"/>
+
+            <!-- ═════════════════════════════════════════════════════════
+                 Typography — system serif / sans / mono fallback chains
+                 ═════════════════════════════════════════════════════════ -->
+            <FontFamily x:Key="DisplaySerif">New York, Iowan Old Style, Cambria, Georgia, serif</FontFamily>
+            <FontFamily x:Key="BodySans">SF Pro Text, Helvetica Neue, Segoe UI, system-ui, sans-serif</FontFamily>
+            <FontFamily x:Key="MonoFont">SF Mono, Menlo, Cascadia Code, Consolas, monospace</FontFamily>
+
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <!-- Universal — paper background flows everywhere -->
+        <Style Selector="Window">
+            <Setter Property="Background" Value="{StaticResource PaperBrush}"/>
+            <Setter Property="FontFamily" Value="{StaticResource BodySans}"/>
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+        </Style>
+
+        <!-- TextBox: borderless, hairline-bottom, transparent fill -->
+        <Style Selector="TextBox.editor">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{StaticResource HairlineBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Padding" Value="2,8,2,10"/>
+            <Setter Property="FontFamily" Value="{StaticResource BodySans}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+            <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="SelectionBrush" Value="{StaticResource AccentSoftBrush}"/>
+        </Style>
+        <Style Selector="TextBox.editor:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="{StaticResource MutedInkBrush}"/>
+        </Style>
+        <Style Selector="TextBox.editor:focus /template/ Border#PART_BorderElement">
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,2"/>
+        </Style>
+
+        <!-- Read-only mono panes (rendered prompt + response) -->
+        <Style Selector="TextBox.mono">
+            <Setter Property="Background" Value="{StaticResource PaperWarmBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource HairlineSoftBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="Padding" Value="14,12"/>
+            <Setter Property="FontFamily" Value="{StaticResource MonoFont}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+        </Style>
+
+        <!-- Primary button (Render) -->
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource PaperBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="Padding" Value="18,7"/>
+            <Setter Property="FontFamily" Value="{StaticResource BodySans}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentDeepBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource PaperBrush}"/>
+        </Style>
+
+        <!-- Outline button (Send) -->
+        <Style Selector="Button.outline">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource InkBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="Padding" Value="18,6"/>
+            <Setter Property="FontFamily" Value="{StaticResource BodySans}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+        <Style Selector="Button.outline:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource InkBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource PaperBrush}"/>
+        </Style>
+
+        <!-- Ghost button (subtle: + Add, x remove) -->
+        <Style Selector="Button.ghost">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource MutedInkBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource HairlineBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="Padding" Value="10,3"/>
+            <Setter Property="FontFamily" Value="{StaticResource BodySans}"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="Button.ghost:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentDeepBrush}"/>
+        </Style>
+
+        <!-- ComboBox: minimal, paper-toned -->
+        <Style Selector="ComboBox.minimal">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{StaticResource HairlineBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="FontFamily" Value="{StaticResource BodySans}"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="2,4,2,4"/>
+        </Style>
+
+        <!-- CheckBox: accent fill -->
+        <Style Selector="CheckBox.accent">
+            <Setter Property="FontFamily" Value="{StaticResource BodySans}"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+        </Style>
+
+        <!-- Stamp toggle chips — section generation selector -->
+        <Style Selector="ToggleButton.stamp">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource MutedInkBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource HairlineBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="2"/>
+            <Setter Property="Padding" Value="9,4,11,5"/>
+            <Setter Property="Margin" Value="0,0,5,5"/>
+            <Setter Property="FontFamily" Value="{StaticResource BodySans}"/>
+            <Setter Property="FontSize" Value="11.5"/>
+        </Style>
+        <Style Selector="ToggleButton.stamp /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ToggleButton.stamp:checked /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource InkBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource PaperBrush}"/>
+        </Style>
+        <Style Selector="ToggleButton.stamp:not(:checked):pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentDeepBrush}"/>
+        </Style>
+        <Style Selector="ToggleButton.stamp:checked:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{StaticResource AccentDeepBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource PaperBrush}"/>
+        </Style>
+
+        <!-- Modal scrim: blur the parent's content while a dialog is open -->
+        <Style Selector="Grid.modalActive">
+            <Setter Property="Effect">
+                <BlurEffect Radius="8"/>
+            </Setter>
+        </Style>
+
+        <!-- GridSplitter: visible as a hairline at rest, warm wash on hover -->
+        <Style Selector="GridSplitter.divider">
+            <Setter Property="Background" Value="{StaticResource HairlineBrush}"/>
+            <Setter Property="MinWidth" Value="0"/>
+        </Style>
+        <Style Selector="GridSplitter.divider:pointerover">
+            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}"/>
+        </Style>
+        <Style Selector="GridSplitter.divider:pressed">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+        </Style>
+
+    </Application.Styles>
+</Application>

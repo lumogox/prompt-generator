@@ -1,0 +1,143 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PromptAssistant.App.Views.SettingsDialog"
+        Title="Settings"
+        Width="680" Height="600"
+        MinWidth="540" MinHeight="440"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+
+    <Grid RowDefinitions="Auto,*,Auto" Margin="32">
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock FontFamily="{StaticResource DisplaySerif}"
+                       FontSize="22"
+                       FontWeight="Medium"
+                       Foreground="{StaticResource InkBrush}">
+                <Run Text="CLI"/><Run Text=" "/><Run Text="Model" Foreground="{StaticResource AccentBrush}"/><Run Text=" "/><Run Text="Settings"/>
+            </TextBlock>
+            <TextBlock Text="Override the default model each CLI uses. Leave blank to let the CLI pick. Edit via form fields or directly as JSON — both write to the same settings file."
+                       FontFamily="{StaticResource DisplaySerif}"
+                       FontStyle="Italic"
+                       FontSize="13.5"
+                       Foreground="{StaticResource MutedInkBrush}"
+                       TextWrapping="Wrap"
+                       LineHeight="20"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Tab control: Form / JSON -->
+        <TabControl Grid.Row="1" Name="Tabs">
+
+            <TabItem Header="Form">
+                <ScrollViewer Padding="0,12,0,0">
+                    <StackPanel Spacing="22">
+
+                        <!-- Gemini -->
+                        <StackPanel>
+                            <TextBlock Text="GEMINI"
+                                       FontFamily="{StaticResource BodySans}"
+                                       FontSize="10" FontWeight="Bold" LetterSpacing="1.5"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       Margin="0,0,0,4"/>
+                            <TextBlock Text="Model name. Examples: gemini-2.5-pro · gemini-2.5-flash · gemini-2.5-flash-lite"
+                                       FontFamily="{StaticResource DisplaySerif}"
+                                       FontStyle="Italic"
+                                       FontSize="12"
+                                       Foreground="{StaticResource MutedInkBrush}"
+                                       Margin="0,0,0,6"/>
+                            <TextBox Name="GeminiInput"
+                                     Classes="editor"
+                                     PlaceholderText="(blank = CLI default)"/>
+                        </StackPanel>
+
+                        <!-- Claude Code -->
+                        <StackPanel>
+                            <TextBlock Text="CLAUDE CODE"
+                                       FontFamily="{StaticResource BodySans}"
+                                       FontSize="10" FontWeight="Bold" LetterSpacing="1.5"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       Margin="0,0,0,4"/>
+                            <TextBlock Text="Alias or full name. Examples: sonnet · opus · haiku · claude-sonnet-4-6 · claude-opus-4-7"
+                                       FontFamily="{StaticResource DisplaySerif}"
+                                       FontStyle="Italic"
+                                       FontSize="12"
+                                       Foreground="{StaticResource MutedInkBrush}"
+                                       Margin="0,0,0,6"/>
+                            <TextBox Name="ClaudeInput"
+                                     Classes="editor"
+                                     PlaceholderText="(blank = CLI default)"/>
+                        </StackPanel>
+
+                        <!-- Codex -->
+                        <StackPanel>
+                            <TextBlock Text="CODEX"
+                                       FontFamily="{StaticResource BodySans}"
+                                       FontSize="10" FontWeight="Bold" LetterSpacing="1.5"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       Margin="0,0,0,4"/>
+                            <TextBlock Text="Model name. Examples: gpt-5 · gpt-5-codex · o3"
+                                       FontFamily="{StaticResource DisplaySerif}"
+                                       FontStyle="Italic"
+                                       FontSize="12"
+                                       Foreground="{StaticResource MutedInkBrush}"
+                                       Margin="0,0,0,6"/>
+                            <TextBox Name="CodexInput"
+                                     Classes="editor"
+                                     PlaceholderText="(blank = CLI default)"/>
+                        </StackPanel>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="JSON">
+                <Grid RowDefinitions="Auto,*" Margin="0,12,0,0">
+                    <TextBlock Grid.Row="0"
+                               Text="Edit the raw JSON. Saving validates and applies. Switching tabs syncs values both ways."
+                               FontFamily="{StaticResource DisplaySerif}"
+                               FontStyle="Italic"
+                               FontSize="12"
+                               Foreground="{StaticResource MutedInkBrush}"
+                               Margin="0,0,0,8"
+                               TextWrapping="Wrap"/>
+                    <TextBox Grid.Row="1"
+                             Name="JsonInput"
+                             Classes="mono"
+                             AcceptsReturn="True"
+                             AcceptsTab="True"
+                             TextWrapping="NoWrap"
+                             VerticalContentAlignment="Top"
+                             FontSize="13"/>
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+
+        <!-- Footer -->
+        <DockPanel Grid.Row="2" Margin="0,18,0,0">
+            <TextBlock Name="JsonError"
+                       DockPanel.Dock="Left"
+                       FontFamily="{StaticResource BodySans}"
+                       FontSize="11"
+                       Foreground="{StaticResource AccentDeepBrush}"
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap"
+                       MaxWidth="320"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                <Button Classes="ghost"
+                        Content="Open settings.json"
+                        ToolTip.Tip="Open the settings file in your default editor"
+                        Click="OnOpenFile"/>
+                <Button Classes="outline"
+                        Content="Cancel"
+                        Click="OnCancel"/>
+                <Button Classes="primary"
+                        Content="Save"
+                        IsDefault="True"
+                        Click="OnSave"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

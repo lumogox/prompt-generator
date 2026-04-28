@@ -1,0 +1,61 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PromptAssistant.App.Views.BuildFromIdeaDialog"
+        Title="Build from idea"
+        Width="640" Height="480"
+        MinWidth="520" MinHeight="380"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Margin="32">
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock FontFamily="{StaticResource DisplaySerif}"
+                       FontSize="22"
+                       FontWeight="Medium"
+                       Foreground="{StaticResource InkBrush}">
+                <Run Text="Build"/><Run Text=" "/><Run Text="from" Foreground="{StaticResource AccentBrush}"/><Run Text=" "/><Run Text="idea"/>
+            </TextBlock>
+            <TextBlock Text="Type a short prompt or rough idea. The selected CLI will expand it into the full 10-part structure — refined, polished, and ready for review."
+                       FontFamily="{StaticResource DisplaySerif}"
+                       FontStyle="Italic"
+                       FontSize="13.5"
+                       Foreground="{StaticResource MutedInkBrush}"
+                       TextWrapping="Wrap"
+                       LineHeight="20"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Idea editor -->
+        <TextBox Grid.Row="1"
+                 Name="IdeaInput"
+                 Classes="editor"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 PlaceholderText="e.g. 'help me write a bug-triage assistant that reads stack traces from CI logs and suggests the most likely root cause'"
+                 VerticalContentAlignment="Top"/>
+
+        <!-- Footer -->
+        <DockPanel Grid.Row="2" Margin="0,18,0,0">
+            <TextBlock DockPanel.Dock="Left"
+                       Text="Tip: be specific about the domain — niche beats generic."
+                       FontFamily="{StaticResource BodySans}"
+                       FontSize="11"
+                       Foreground="{StaticResource FaintInkBrush}"
+                       VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="10">
+                <Button Classes="outline"
+                        Content="Cancel"
+                        Click="OnCancel"/>
+                <Button Classes="primary"
+                        Content="Build →"
+                        IsDefault="True"
+                        Click="OnBuild"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

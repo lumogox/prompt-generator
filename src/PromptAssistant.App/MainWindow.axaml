@@ -1,0 +1,756 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:PromptAssistant.App.ViewModels"
+        xmlns:vms="clr-namespace:PromptAssistant.App.ViewModels.Sections"
+        xmlns:m="clr-namespace:PromptAssistant.Core.Models;assembly=PromptAssistant.Core"
+        mc:Ignorable="d" d:DesignWidth="1240" d:DesignHeight="860"
+        x:Class="PromptAssistant.App.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Prompt Engineering Assistant"
+        Width="1240" Height="860"
+        MinWidth="900" MinHeight="600"
+        ExtendClientAreaToDecorationsHint="False">
+
+    <Window.DataTemplates>
+
+        <!-- ════════════════════════════════════════════════════════════
+             FREE-TEXT SECTION TEMPLATE
+             ════════════════════════════════════════════════════════════ -->
+        <DataTemplate DataType="vms:FreeTextSectionViewModel" x:DataType="vms:FreeTextSectionViewModel">
+            <Grid ColumnDefinitions="64,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,0,0,28">
+
+                <!-- Drop-cap numeral -->
+                <TextBlock Grid.Column="0" Grid.Row="0" Grid.RowSpan="3"
+                           Text="{Binding KindNumber}"
+                           FontFamily="{StaticResource DisplaySerif}"
+                           FontSize="34"
+                           FontWeight="Light"
+                           Foreground="{StaticResource FaintInkBrush}"
+                           VerticalAlignment="Top"
+                           Margin="0,2,0,0"/>
+
+                <!-- Title row: title + optional chip + include checkbox -->
+                <StackPanel Grid.Column="1" Grid.Row="0"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Title}"
+                               FontFamily="{StaticResource DisplaySerif}"
+                               FontSize="19"
+                               FontWeight="Medium"
+                               Foreground="{StaticResource InkBrush}"/>
+                    <Border IsVisible="{Binding IsOptional}"
+                            Margin="10,0,0,0"
+                            Padding="6,1,6,2"
+                            BorderBrush="{StaticResource HairlineBrush}"
+                            BorderThickness="1"
+                            CornerRadius="2"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="optional"
+                                   FontFamily="{StaticResource BodySans}"
+                                   FontSize="10"
+                                   FontWeight="Medium"
+                                   Foreground="{StaticResource MutedInkBrush}"
+                                   Padding="0,0,0,1"/>
+                    </Border>
+                    <CheckBox IsVisible="{Binding IsOptional}"
+                              IsChecked="{Binding IsIncluded, Mode=TwoWay}"
+                              Content="Include in prompt"
+                              FontFamily="{StaticResource BodySans}"
+                              FontSize="11"
+                              Margin="14,0,0,0"
+                              Padding="6,0,0,0"
+                              ToolTip.Tip="When unchecked, this section is skipped entirely in the assembled prompt"
+                              VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Italic description -->
+                <TextBlock Grid.Column="1" Grid.Row="1"
+                           Text="{Binding Description}"
+                           FontFamily="{StaticResource DisplaySerif}"
+                           FontStyle="Italic"
+                           FontSize="13.5"
+                           Foreground="{StaticResource MutedInkBrush}"
+                           TextWrapping="Wrap"
+                           LineHeight="20"
+                           Margin="0,4,0,10"/>
+
+                <!-- Input (disabled when section is excluded) -->
+                <TextBox Grid.Column="1" Grid.Row="2"
+                         Classes="editor"
+                         Text="{Binding Content, Mode=TwoWay}"
+                         PlaceholderText="{Binding Placeholder}"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         MinHeight="56"
+                         MaxHeight="220"
+                         IsEnabled="{Binding IsIncluded}"/>
+
+                <!-- Quick-pick suggestion chips (only sections with Suggestions populated, e.g. Prefilled response) -->
+                <ItemsControl Grid.Column="1" Grid.Row="3"
+                              IsVisible="{Binding HasSuggestions}"
+                              ItemsSource="{Binding Suggestions}"
+                              IsEnabled="{Binding IsIncluded}"
+                              Margin="0,8,0,0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Classes="ghost"
+                                    Content="{Binding}"
+                                    Padding="9,3"
+                                    Margin="0,0,6,5"
+                                    FontFamily="{StaticResource MonoFont}"
+                                    FontSize="11"
+                                    ToolTip.Tip="Click to use this as the prefill"
+                                    Command="{Binding $parent[ItemsControl].((vms:FreeTextSectionViewModel)DataContext).ApplySuggestionCommand}"
+                                    CommandParameter="{Binding}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </DataTemplate>
+
+        <!-- ════════════════════════════════════════════════════════════
+             LIST SECTION TEMPLATE (Examples)
+             ════════════════════════════════════════════════════════════ -->
+        <DataTemplate DataType="vms:ListSectionViewModel" x:DataType="vms:ListSectionViewModel">
+            <Grid ColumnDefinitions="64,*" RowDefinitions="Auto,Auto,Auto" Margin="0,0,0,28">
+
+                <TextBlock Grid.Column="0" Grid.Row="0" Grid.RowSpan="3"
+                           Text="{Binding KindNumber}"
+                           FontFamily="{StaticResource DisplaySerif}"
+                           FontSize="34"
+                           FontWeight="Light"
+                           Foreground="{StaticResource FaintInkBrush}"
+                           VerticalAlignment="Top"
+                           Margin="0,2,0,0"/>
+
+                <DockPanel Grid.Column="1" Grid.Row="0" VerticalAlignment="Center">
+                    <Button DockPanel.Dock="Right"
+                            Classes="ghost"
+                            Content="+ Add example"
+                            Command="{Binding AddItemCommand}"
+                            IsEnabled="{Binding IsIncluded}"/>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Title}"
+                                   FontFamily="{StaticResource DisplaySerif}"
+                                   FontSize="19"
+                                   FontWeight="Medium"
+                                   Foreground="{StaticResource InkBrush}"/>
+                        <Border Margin="10,0,0,0"
+                                Padding="6,1,6,2"
+                                BorderBrush="{StaticResource HairlineBrush}"
+                                BorderThickness="1"
+                                CornerRadius="2"
+                                VerticalAlignment="Center">
+                            <TextBlock Text="optional"
+                                       FontFamily="{StaticResource BodySans}"
+                                       FontSize="10"
+                                       FontWeight="Medium"
+                                       Foreground="{StaticResource MutedInkBrush}"
+                                       Padding="0,0,0,1"/>
+                        </Border>
+                        <CheckBox IsChecked="{Binding IsIncluded, Mode=TwoWay}"
+                                  Content="Include in prompt"
+                                  FontFamily="{StaticResource BodySans}"
+                                  FontSize="11"
+                                  Margin="14,0,0,0"
+                                  Padding="6,0,0,0"
+                                  ToolTip.Tip="When unchecked, this section is skipped entirely in the assembled prompt"
+                                  VerticalAlignment="Center"/>
+                    </StackPanel>
+                </DockPanel>
+
+                <TextBlock Grid.Column="1" Grid.Row="1"
+                           Text="{Binding Description}"
+                           FontFamily="{StaticResource DisplaySerif}"
+                           FontStyle="Italic"
+                           FontSize="13.5"
+                           Foreground="{StaticResource MutedInkBrush}"
+                           TextWrapping="Wrap"
+                           LineHeight="20"
+                           Margin="0,4,0,10"/>
+
+                <StackPanel Grid.Column="1" Grid.Row="2" IsEnabled="{Binding IsIncluded}">
+                <ItemsControl ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vms:ListItemViewModel" x:DataType="vms:ListItemViewModel">
+                            <Border Margin="0,0,0,14"
+                                    Padding="12,10,10,12"
+                                    Background="{StaticResource PaperWarmBrush}"
+                                    BorderBrush="{StaticResource HairlineSoftBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="2">
+                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+
+                                    <!-- USER label + remove button on same row -->
+                                    <TextBlock Grid.Column="0" Grid.Row="0"
+                                               Text="USER"
+                                               FontFamily="{StaticResource BodySans}"
+                                               FontSize="9"
+                                               FontWeight="Bold"
+                                               LetterSpacing="1"
+                                               Foreground="{StaticResource AccentBrush}"
+                                               Margin="0,0,0,4"/>
+                                    <Button Grid.Column="1" Grid.Row="0"
+                                            Classes="ghost"
+                                            Content="✕"
+                                            VerticalAlignment="Top"
+                                            Margin="8,-2,0,0"
+                                            Command="{Binding $parent[ItemsControl].((vms:ListSectionViewModel)DataContext).RemoveItemCommand}"
+                                            CommandParameter="{Binding}"/>
+
+                                    <!-- USER input -->
+                                    <TextBox Grid.Column="0" Grid.Row="1"
+                                             Classes="editor"
+                                             Text="{Binding UserMessage, Mode=TwoWay}"
+                                             PlaceholderText="{Binding $parent[ItemsControl].((vms:ListSectionViewModel)DataContext).UserPlaceholder}"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             MinHeight="40"
+                                             MaxHeight="140"/>
+
+                                    <!-- Hairline divider between User and Assistant -->
+                                    <Rectangle Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="2"
+                                               Height="1"
+                                               Fill="{StaticResource HairlineSoftBrush}"
+                                               Margin="0,12,0,12"/>
+
+                                    <!-- ASSISTANT label -->
+                                    <TextBlock Grid.Column="0" Grid.Row="3"
+                                               Text="ASSISTANT"
+                                               FontFamily="{StaticResource BodySans}"
+                                               FontSize="9"
+                                               FontWeight="Bold"
+                                               LetterSpacing="1"
+                                               Foreground="{StaticResource MutedInkBrush}"
+                                               Margin="0,0,0,4"/>
+
+                                    <!-- ASSISTANT input -->
+                                    <TextBox Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="4"
+                                             Classes="editor"
+                                             Text="{Binding AssistantResponse, Mode=TwoWay}"
+                                             PlaceholderText="{Binding $parent[ItemsControl].((vms:ListSectionViewModel)DataContext).AssistantPlaceholder}"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             MinHeight="40"
+                                             MaxHeight="180"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Best-practice hint -->
+                <Border Margin="0,4,0,0"
+                        Padding="0,10,0,0"
+                        BorderBrush="{StaticResource HairlineSoftBrush}"
+                        BorderThickness="0,1,0,0">
+                    <TextBlock FontFamily="{StaticResource DisplaySerif}"
+                               FontStyle="Italic"
+                               FontSize="12.5"
+                               Foreground="{StaticResource FaintInkBrush}"
+                               TextWrapping="Wrap"
+                               LineHeight="18">
+                        <Run Text="Tip: "
+                             FontWeight="SemiBold"
+                             Foreground="{StaticResource AccentBrush}"/>
+                        <Run Text="Anthropic recommends 3–5 diverse examples"
+                             Foreground="{StaticResource MutedInkBrush}"/>
+                        <Run Text=" — quantity AND diversity dramatically improve consistency on formatting-sensitive tasks."/>
+                    </TextBlock>
+                </Border>
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
+
+        <!-- ════════════════════════════════════════════════════════════
+             TOGGLE SECTION TEMPLATE (Step-by-step)
+             ════════════════════════════════════════════════════════════ -->
+        <DataTemplate DataType="vms:ToggleSectionViewModel" x:DataType="vms:ToggleSectionViewModel">
+            <Grid ColumnDefinitions="64,*" RowDefinitions="Auto,Auto,Auto" Margin="0,0,0,28">
+
+                <TextBlock Grid.Column="0" Grid.Row="0" Grid.RowSpan="3"
+                           Text="{Binding KindNumber}"
+                           FontFamily="{StaticResource DisplaySerif}"
+                           FontSize="34"
+                           FontWeight="Light"
+                           Foreground="{StaticResource FaintInkBrush}"
+                           VerticalAlignment="Top"
+                           Margin="0,2,0,0"/>
+
+                <TextBlock Grid.Column="1" Grid.Row="0"
+                           Text="{Binding Title}"
+                           FontFamily="{StaticResource DisplaySerif}"
+                           FontSize="19"
+                           FontWeight="Medium"
+                           Foreground="{StaticResource InkBrush}"
+                           VerticalAlignment="Center"/>
+
+                <TextBlock Grid.Column="1" Grid.Row="1"
+                           Text="{Binding Description}"
+                           FontFamily="{StaticResource DisplaySerif}"
+                           FontStyle="Italic"
+                           FontSize="13.5"
+                           Foreground="{StaticResource MutedInkBrush}"
+                           TextWrapping="Wrap"
+                           LineHeight="20"
+                           Margin="0,4,0,10"/>
+
+                <CheckBox Grid.Column="1" Grid.Row="2"
+                          Classes="accent"
+                          IsChecked="{Binding Enabled, Mode=TwoWay}"
+                          Content="{Binding CanonicalText}"/>
+            </Grid>
+        </DataTemplate>
+
+    </Window.DataTemplates>
+
+    <!-- ════════════════════════════════════════════════════════════════
+         WINDOW LAYOUT
+         Outer Grid wraps the main content + a scrim overlay.
+         When a modal dialog is open, IsModalActive flips true:
+           – the inner Grid (#MainContent) gets a BlurEffect via .modalActive class
+           – the scrim Border becomes visible (semi-transparent ink wash)
+         The scrim is a sibling of MainContent (not a child) so it doesn't
+         inherit the blur effect itself.
+         ════════════════════════════════════════════════════════════════ -->
+    <Grid>
+    <Grid Name="MainContent"
+          Classes.modalActive="{Binding IsModalActive}"
+          RowDefinitions="Auto,Auto,*,Auto">
+
+        <!-- Header band: title + provider + actions -->
+        <Border Grid.Row="0"
+                BorderBrush="{StaticResource HairlineBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="32,22,32,18">
+            <Grid ColumnDefinitions="*,Auto">
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock FontFamily="{StaticResource DisplaySerif}"
+                               FontSize="26"
+                               FontWeight="Medium"
+                               Foreground="{StaticResource InkBrush}">
+                        <Run Text="Prompt"/><Run Text=" "/><Run Text="Engineering" Foreground="{StaticResource AccentBrush}"/><Run Text=" "/><Run Text="Assistant"/>
+                    </TextBlock>
+                    <TextBlock Text="A workbench for the 10-part Anthropic prompt structure"
+                               FontFamily="{StaticResource DisplaySerif}"
+                               FontStyle="Italic"
+                               FontSize="13"
+                               Foreground="{StaticResource MutedInkBrush}"
+                               Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="Provider"
+                               FontFamily="{StaticResource BodySans}"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource FaintInkBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"/>
+                    <ComboBox Classes="minimal"
+                              ItemsSource="{Binding ProviderNames}"
+                              SelectedItem="{Binding SelectedProvider, Mode=TwoWay}"
+                              MinWidth="160"
+                              VerticalAlignment="Center"/>
+                    <Button Classes="ghost"
+                            Content="✦ Generate"
+                            ToolTip.Tip="Ask the selected CLI to fill all 10 fields with a random example"
+                            Command="{Binding GenerateExampleCommand}"
+                            IsEnabled="{Binding !IsSending}"
+                            Margin="20,0,0,0"
+                            Padding="14,5"/>
+                    <Button Classes="primary"
+                            Content="Render →"
+                            Command="{Binding RenderCommand}"
+                            Margin="10,0,0,0"/>
+                    <Button Classes="ghost"
+                            Content="⚙ Settings"
+                            ToolTip.Tip="Configure which model each CLI uses"
+                            Command="{Binding OpenSettingsCommand}"
+                            IsVisible="{Binding HasSettings}"
+                            Margin="10,0,0,0"
+                            Padding="10,5"/>
+                    <Button Classes="ghost"
+                            Content="📋 Logs"
+                            ToolTip.Tip="Open the log folder — useful for debugging CLI errors"
+                            Command="{Binding OpenLogsCommand}"
+                            IsVisible="{Binding HasLogDirectory}"
+                            Margin="6,0,0,0"
+                            Padding="10,5"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Indeterminate progress bar (only visible while a CLI op is running) -->
+        <ProgressBar Grid.Row="1"
+                     IsIndeterminate="True"
+                     IsVisible="{Binding IsSending}"
+                     Height="2"
+                     MinHeight="2"
+                     Background="Transparent"
+                     Foreground="{StaticResource AccentBrush}"
+                     BorderThickness="0"
+                     CornerRadius="0"/>
+
+        <!-- Main content -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="320"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*" MinWidth="320"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT: editor column.
+                 Spacing is on the inner StackPanel's Margin (not the ScrollViewer's Padding) because
+                 Margin is included in the measured DesiredSize and therefore in the scrollable extent —
+                 Padding on a ScrollViewer doesn't always make it into the scroll math, and the bottom
+                 of the last section gets clipped at max scroll.
+                 - Right margin (52) leaves room for the macOS overlay scrollbar so right-docked
+                   buttons in section headers don't get covered by it.
+                 - Bottom margin (80) gives generous breathing room so the last section's TextBox sits
+                   comfortably above the viewport edge with the scrollbar fully reachable. -->
+            <ScrollViewer Grid.Column="0"
+                          Padding="0"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="32,28,52,80">
+
+                    <DockPanel Margin="0,0,0,18">
+                        <StackPanel DockPanel.Dock="Right"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                            <Button Classes="ghost"
+                                    Content="✺ From idea"
+                                    ToolTip.Tip="Open a dialog to type a short prompt or idea — the CLI will expand it into the full 10-part structure"
+                                    Command="{Binding BuildFromIdeaCommand}"
+                                    IsEnabled="{Binding !IsSending}"
+                                    Padding="14,5"/>
+                            <Button Classes="ghost"
+                                    Content="✎ Refine"
+                                    ToolTip.Tip="Polish all filled-in fields with the selected CLI — fixes grammar, tightens wording, preserves intent"
+                                    Command="{Binding RefineCommand}"
+                                    IsEnabled="{Binding !IsSending}"
+                                    Padding="14,5"/>
+                        </StackPanel>
+                        <TextBlock Text="COMPOSE"
+                                   FontFamily="{StaticResource BodySans}"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource FaintInkBrush}"
+                                   VerticalAlignment="Center"/>
+                    </DockPanel>
+
+                    <!-- Section generation selector: pick which sections the LLM fills on Generate / Refine / From idea -->
+                    <Border Margin="0,0,0,28"
+                            Padding="14,11,14,10"
+                            Background="{StaticResource PaperWarmBrush}"
+                            BorderBrush="{StaticResource HairlineBrush}"
+                            BorderThickness="1"
+                            CornerRadius="3"
+                            ToolTip.Tip="Select which sections the LLM will populate when you click Generate, From idea, or Refine. Unselected sections keep their current content.">
+                        <StackPanel Spacing="10">
+
+                            <DockPanel>
+                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="5">
+                                    <Button Classes="ghost"
+                                            Content="All"
+                                            Padding="8,2"
+                                            FontSize="11"
+                                            Command="{Binding SelectAllTargetsCommand}"/>
+                                    <Button Classes="ghost"
+                                            Content="Clear"
+                                            Padding="8,2"
+                                            FontSize="11"
+                                            Command="{Binding ClearTargetsCommand}"/>
+                                </StackPanel>
+                                <TextBlock Text="GENERATE SECTIONS"
+                                           FontFamily="{StaticResource BodySans}"
+                                           FontSize="9.5"
+                                           FontWeight="Bold"
+                                           LetterSpacing="0.8"
+                                           Foreground="{StaticResource FaintInkBrush}"
+                                           VerticalAlignment="Center"/>
+                            </DockPanel>
+
+                            <ItemsControl ItemsSource="{Binding GenerationTargets}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:SectionGenerationTarget" x:DataType="vm:SectionGenerationTarget">
+                                        <ToggleButton Classes="stamp"
+                                                      IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                                <TextBlock Text="{Binding NumberLabel}"
+                                                           FontFamily="{StaticResource MonoFont}"
+                                                           FontSize="9.5"
+                                                           FontWeight="Bold"
+                                                           Opacity="0.55"
+                                                           VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding Label}"
+                                                           FontFamily="{StaticResource BodySans}"
+                                                           FontSize="11.5"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </ToggleButton>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                        </StackPanel>
+                    </Border>
+
+                    <ItemsControl ItemsSource="{Binding Sections}"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Draggable vertical divider -->
+            <GridSplitter Grid.Column="1"
+                          Classes="divider"
+                          ResizeDirection="Columns"
+                          ShowsPreview="False"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"/>
+
+            <!-- RIGHT: structured assembled-prompt visualization -->
+            <Grid Grid.Column="2"
+                  RowDefinitions="Auto,*"
+                  Margin="40,28,32,40">
+
+                <!-- Header: title + token summary + save + copy -->
+                <DockPanel Grid.Row="0" Margin="0,0,0,12">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="6">
+                        <Button Classes="ghost"
+                                Content="⤓ Save"
+                                ToolTip.Tip="Save the assembled prompt as a Markdown file"
+                                IsEnabled="{Binding HasRenderedOutput}"
+                                Command="{Binding SaveAsMarkdownCommand}"/>
+                        <Button Classes="ghost"
+                                Content="⧉ Copy"
+                                ToolTip.Tip="Copy assembled prompt to clipboard"
+                                IsEnabled="{Binding HasRenderedOutput}"
+                                Command="{Binding CopyRenderedCommand}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
+                        <TextBlock Text="ASSEMBLED PROMPT"
+                                   FontFamily="{StaticResource BodySans}"
+                                   FontSize="10"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource FaintInkBrush}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TokenSummary}"
+                                   FontFamily="{StaticResource MonoFont}"
+                                   FontSize="11"
+                                   FontWeight="Medium"
+                                   Foreground="{StaticResource MutedInkBrush}"
+                                   VerticalAlignment="Center"
+                                   ToolTip.Tip="Approximate token count using the chars÷4 heuristic. Trends correctly across CLIs; not exact."/>
+                    </StackPanel>
+                </DockPanel>
+
+                <!-- Empty state placeholder — fills Grid.Row=1 so it can center properly -->
+                <Border Grid.Row="1"
+                        IsVisible="{Binding !HasRenderedOutput}"
+                        Background="{StaticResource PaperWarmBrush}"
+                        BorderBrush="{StaticResource HairlineSoftBrush}"
+                        BorderThickness="1"
+                        CornerRadius="3"
+                        Padding="40">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="6">
+                        <TextBlock Text="No prompt assembled yet"
+                                   FontFamily="{StaticResource DisplaySerif}"
+                                   FontStyle="Italic"
+                                   FontSize="18"
+                                   Foreground="{StaticResource MutedInkBrush}"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Fill in the COMPOSE form on the left, then click Render →"
+                                   FontFamily="{StaticResource DisplaySerif}"
+                                   FontStyle="Italic"
+                                   FontSize="13.5"
+                                   Foreground="{StaticResource FaintInkBrush}"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,2,0,0"/>
+                        <TextBlock Text="{Binding StatusMessage}"
+                                   FontFamily="{StaticResource BodySans}"
+                                   FontSize="12"
+                                   Foreground="{StaticResource AccentDeepBrush}"
+                                   HorizontalAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   MaxWidth="360"
+                                   Margin="0,16,0,0"
+                                   IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Structured view — shown after Render, in its own ScrollViewer for long content -->
+                <ScrollViewer Grid.Row="1"
+                              IsVisible="{Binding HasRenderedOutput}"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Padding="0,0,8,12">
+                    <StackPanel>
+
+                            <!-- USER turn label -->
+                            <Border Padding="10,4,10,4"
+                                    HorizontalAlignment="Left"
+                                    Background="{StaticResource InkBrush}"
+                                    CornerRadius="2"
+                                    Margin="0,0,0,10">
+                                <TextBlock Text="USER"
+                                           FontFamily="{StaticResource BodySans}"
+                                           FontSize="10"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource PaperBrush}"
+                                           LetterSpacing="2"/>
+                            </Border>
+
+                            <!-- Section blocks -->
+                            <ItemsControl ItemsSource="{Binding RenderedSections}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="m:RenderedSection" x:DataType="m:RenderedSection">
+                                        <Border CornerRadius="4"
+                                                Padding="14,12"
+                                                Margin="0,0,0,8"
+                                                Background="{Binding Kind, Converter={StaticResource SectionKindToBrush}}">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Label}"
+                                                           FontFamily="{StaticResource BodySans}"
+                                                           FontSize="9"
+                                                           FontWeight="Bold"
+                                                           LetterSpacing="1.5"
+                                                           Foreground="{Binding Kind, Converter={StaticResource SectionKindToBrush}, ConverterParameter=Fg}"
+                                                           Margin="0,0,0,6"/>
+                                                <TextBlock Text="{Binding Content}"
+                                                           FontFamily="{StaticResource MonoFont}"
+                                                           FontSize="12"
+                                                           Foreground="{StaticResource InkBrush}"
+                                                           TextWrapping="Wrap"
+                                                           LineHeight="18"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <!-- ASSISTANT turn label + prefill -->
+                            <StackPanel IsVisible="{Binding RenderedAssistantPrefill, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                        Margin="0,18,0,0">
+                                <Border Padding="10,4,10,4"
+                                        HorizontalAlignment="Left"
+                                        Background="{StaticResource AccentBrush}"
+                                        CornerRadius="2"
+                                        Margin="0,0,0,10">
+                                    <TextBlock Text="ASSISTANT (prefill)"
+                                               FontFamily="{StaticResource BodySans}"
+                                               FontSize="10"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource PaperBrush}"
+                                               LetterSpacing="2"/>
+                                </Border>
+                                <Border CornerRadius="4"
+                                        Padding="14,12"
+                                        Background="{StaticResource Section.AssistantPrefill.Bg}">
+                                    <TextBlock Text="{Binding RenderedAssistantPrefill}"
+                                               FontFamily="{StaticResource MonoFont}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="{StaticResource Section.AssistantPrefill.Fg}"
+                                               TextWrapping="Wrap"/>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Status banner (e.g. "Refined …", "Copied to clipboard") -->
+                            <Border IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                    Padding="12,8"
+                                    Margin="0,18,0,0"
+                                    Background="{StaticResource PaperWarmBrush}"
+                                    BorderBrush="{StaticResource HairlineSoftBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="2">
+                                <TextBlock Text="{Binding StatusMessage}"
+                                           FontFamily="{StaticResource BodySans}"
+                                           FontSize="12"
+                                           Foreground="{StaticResource MutedInkBrush}"
+                                           TextWrapping="Wrap"/>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+            </Grid>
+        </Grid>
+
+        <!-- Status bar: ambient signals (last operation + duration · token count · provider health) -->
+        <Border Grid.Row="3"
+                BorderBrush="{StaticResource HairlineBrush}"
+                BorderThickness="0,1,0,0"
+                Background="{StaticResource PaperWarmBrush}"
+                Padding="20,5,20,5">
+            <Grid ColumnDefinitions="*,Auto,Auto">
+
+                <!-- LEFT: last operation status with duration -->
+                <TextBlock Grid.Column="0"
+                           Text="{Binding OperationStatus}"
+                           FontFamily="{StaticResource BodySans}"
+                           FontSize="11"
+                           Foreground="{StaticResource MutedInkBrush}"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"/>
+
+                <!-- CENTER: token estimate (mirrors right-pane header so it's always visible) -->
+                <TextBlock Grid.Column="1"
+                           Text="{Binding TokenSummary}"
+                           Margin="20,0"
+                           FontFamily="{StaticResource MonoFont}"
+                           FontSize="10.5"
+                           Foreground="{StaticResource FaintInkBrush}"
+                           VerticalAlignment="Center"
+                           ToolTip.Tip="Approximate token count using the chars÷4 heuristic"
+                           IsVisible="{Binding TokenSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+                <!-- RIGHT: provider health semaphore (green=ok, yellow=found-but-unverified-or-failed, red=missing) -->
+                <ItemsControl Grid.Column="2"
+                              ItemsSource="{Binding ProviderHealthList}"
+                              ToolTip.Tip="● Green: last call succeeded · ● Yellow: found but unverified or last call failed · ● Red: not on PATH">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="14"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:ProviderHealthEntry" x:DataType="vm:ProviderHealthEntry">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <Ellipse Width="9" Height="9"
+                                         VerticalAlignment="Center"
+                                         Fill="{Binding Health, Converter={StaticResource HealthToBrush}}"/>
+                                <TextBlock Text="{Binding Name}"
+                                           FontFamily="{StaticResource MonoFont}"
+                                           FontSize="10.5"
+                                           Foreground="{StaticResource MutedInkBrush}"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </Border>
+    </Grid>
+
+        <!-- Scrim: semi-transparent ink wash that sits above the blurred content
+             while a modal dialog is open. IsHitTestVisible=False is decorative
+             only — the OS modal blocks parent interaction anyway. -->
+        <Border IsVisible="{Binding IsModalActive}"
+                Background="#3A1A1814"
+                IsHitTestVisible="False"/>
+    </Grid>
+</Window>

@@ -1,0 +1,115 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:v="clr-namespace:PromptAssistant.App.Views"
+        x:Class="PromptAssistant.App.Views.RefineDialog"
+        x:DataType="v:RefineDialog"
+        Title="Refine"
+        Width="580" Height="560"
+        MinWidth="500" MinHeight="440"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*,Auto"
+          Margin="32,28,32,24">
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock FontFamily="{StaticResource DisplaySerif}"
+                       FontSize="22"
+                       FontWeight="Medium"
+                       Foreground="{StaticResource InkBrush}">
+                <Run Text="Refine"/><Run Text=" "/><Run Text="lens" Foreground="{StaticResource AccentBrush}" FontStyle="Italic"/>
+            </TextBlock>
+            <TextBlock Text="Steer the polish — pick lenses, write guidance, or both. Baseline polish (grammar, tighten, hallucination guards) always applies."
+                       FontFamily="{StaticResource DisplaySerif}"
+                       FontStyle="Italic"
+                       FontSize="13"
+                       Foreground="{StaticResource MutedInkBrush}"
+                       TextWrapping="Wrap"
+                       LineHeight="19"
+                       Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- Lenses section header -->
+        <DockPanel Grid.Row="1" Margin="0,0,0,8">
+            <Button DockPanel.Dock="Right"
+                    Classes="ghost"
+                    Content="Clear"
+                    Padding="8,2"
+                    FontSize="11"
+                    Click="OnClearLenses"/>
+            <TextBlock Text="LENSES"
+                       FontFamily="{StaticResource BodySans}"
+                       FontSize="9.5"
+                       FontWeight="Bold"
+                       LetterSpacing="0.8"
+                       Foreground="{StaticResource FaintInkBrush}"
+                       VerticalAlignment="Center"/>
+        </DockPanel>
+
+        <!-- Lens chips -->
+        <ItemsControl Grid.Row="2"
+                      ItemsSource="{Binding Lenses}"
+                      Margin="0,0,0,18">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="v:RefineLens" x:DataType="v:RefineLens">
+                    <ToggleButton Classes="stamp"
+                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                  ToolTip.Tip="{Binding Description}">
+                        <TextBlock Text="{Binding Label}"
+                                   FontFamily="{StaticResource BodySans}"
+                                   FontSize="11.5"
+                                   VerticalAlignment="Center"/>
+                    </ToggleButton>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!-- Guidance label -->
+        <TextBlock Grid.Row="3"
+                   Text="GUIDANCE (OPTIONAL)"
+                   FontFamily="{StaticResource BodySans}"
+                   FontSize="9.5"
+                   FontWeight="Bold"
+                   LetterSpacing="0.8"
+                   Foreground="{StaticResource FaintInkBrush}"
+                   Margin="0,0,0,8"/>
+
+        <!-- Guidance editor -->
+        <TextBox Grid.Row="4"
+                 Name="GuidanceInput"
+                 Classes="editor"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 PlaceholderText="e.g. 'add a rule about citing the source line number when answering'"
+                 VerticalContentAlignment="Top"/>
+
+        <!-- Footer -->
+        <DockPanel Grid.Row="5" Margin="0,18,0,0">
+            <TextBlock DockPanel.Dock="Left"
+                       Text="Lenses combine. Guidance is appended verbatim to the meta-prompt."
+                       FontFamily="{StaticResource BodySans}"
+                       FontSize="11"
+                       Foreground="{StaticResource FaintInkBrush}"
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap"
+                       MaxWidth="340"/>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="10">
+                <Button Classes="outline"
+                        Content="Cancel"
+                        Click="OnCancel"/>
+                <Button Classes="primary"
+                        Content="Refine →"
+                        IsDefault="True"
+                        Click="OnRefine"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>

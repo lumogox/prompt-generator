@@ -96,7 +96,31 @@ Download the latest release from the [Releases](../../releases) page.
 | **Windows** (x64) | `PromptAssistant-*-win-x64.zip` | Extract → run `PromptAssistant.Desktop.exe` |
 | **Linux** (x64) | `PromptAssistant-*-linux-x64.tar.gz` | `tar -xzf <file>` → run `./PromptAssistant.Desktop` |
 
-> **macOS first launch:** right-click the app → Open (unsigned — one-time Gatekeeper bypass).  
+### macOS first launch
+
+The app is **not yet code-signed or notarized**, so macOS Gatekeeper will refuse to open
+it with a misleading *"Prompt Assistant.app is damaged and can't be opened"* dialog. The
+binary isn't actually damaged — macOS shows this wording for any unsigned app downloaded
+from the internet.
+
+**Fix:** open Terminal and strip the quarantine attribute:
+
+```bash
+xattr -cr "/Applications/Prompt Assistant.app"
+```
+
+(Use `~/Downloads/Prompt\ Assistant.app` if you haven't moved it to Applications yet.)
+
+The app will then launch normally. If macOS still blocks it, open
+**System Settings → Privacy & Security**, scroll to the bottom, and click
+**Open Anyway** next to the Prompt Assistant entry.
+
+> Why this is necessary: Apple requires apps from outside the App Store to be signed with
+> a Developer ID and notarized to launch silently. Proper signing is on the roadmap; until
+> then the `xattr` workaround is the supported path.
+
+### Other platforms
+
 > **Windows first launch:** SmartScreen may warn — click **More info** → **Run anyway**.  
 > **Linux prerequisites:** `libX11`, `libGL`, and `libfontconfig` must be present (standard on all desktop distros).
 

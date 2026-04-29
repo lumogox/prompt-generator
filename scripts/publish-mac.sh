@@ -9,10 +9,16 @@
 #
 # Output: artifacts/dmg/PromptAssistant-<VERSION>-<RUNTIME>.dmg
 #
-# Note: this produces an UNSIGNED bundle. macOS Gatekeeper will refuse to launch
-# it on a different machine until the user right-clicks → Open (one-time bypass)
-# or strips quarantine: `xattr -dr com.apple.quarantine /Applications/<App>.app`.
-# For real distribution, codesign + notarytool steps are required (see README).
+# Note: this produces an UNSIGNED bundle. macOS Gatekeeper will show a misleading
+# "App is damaged" dialog because the .dmg is downloaded with com.apple.quarantine
+# set and the binary lacks an Apple Developer ID signature.
+#
+# End-user workaround:  xattr -cr "/Applications/Prompt Assistant.app"
+# (right-click → Open no longer bypasses this on Sonoma+; xattr is the reliable path.)
+#
+# Proper fix for distribution: codesign with a Developer ID Application certificate +
+# notarize via `xcrun notarytool submit` + staple. Requires Apple Developer Program
+# enrollment ($99/yr). See README for the workaround documented for end users.
 set -euo pipefail
 
 # ─── Config ─────────────────────────────────────────────────────────────────
@@ -98,5 +104,8 @@ echo "  Runtime: $RUNTIME"
 echo "  Version: $VERSION"
 echo ""
 echo "  Install: open the DMG and drag the .app into Applications."
-echo "  First launch on another Mac may require: right-click → Open"
-echo "  (or: xattr -dr com.apple.quarantine /Applications/$APP_NAME.app)"
+echo "  First launch on another Mac (unsigned binary) requires stripping quarantine:"
+echo "      xattr -cr \"/Applications/$APP_NAME.app\""
+echo "  Right-click → Open no longer bypasses Gatekeeper for fully-unsigned apps on"
+echo "  macOS Sonoma+; the xattr command is the reliable fix until codesign+notarize"
+echo "  is wired up."

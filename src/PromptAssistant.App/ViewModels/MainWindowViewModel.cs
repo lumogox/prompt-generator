@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Avalonia.Threading;
 using PromptAssistant.App.Converters;
 using PromptAssistant.App.ViewModels.Sections;
 
@@ -92,7 +93,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         foreach (var name in new[] { "Gemini", "Claude Code", "Codex" })
         {
             var initial = providers.ContainsKey(name) ? ProviderHealth.Unknown : ProviderHealth.NotFound;
-            ProviderHealthList.Add(new ProviderHealthEntry(name, initial));
+            ProviderHealthList.Add(new ProviderHealthEntry(name, ProviderKind.Cli, initial));
         }
 
         // HTTP providers (e.g. Ollama): always registered regardless of daemon state, so the dot
@@ -100,9 +101,18 @@ public sealed partial class MainWindowViewModel : ObservableObject
         // — even though a local HTTP probe is free, NotFound is sticky in MarkProviderHealth, so a
         // probe-and-mark-red on a temporarily-stopped daemon would lock the dot red for the session.
         // Yellow → resolves on first real call is the recoverable path.
-        foreach (var provider in providers.Values.Where(p => p.Kind == ProviderKind.LocalHttp))
+        var httpProviders = providers.Values.Where(p => p.Kind == ProviderKind.LocalHttp).ToArray();
+        foreach (var provider in httpProviders)
         {
-            ProviderHealthList.Add(new ProviderHealthEntry(provider.ProviderName, ProviderHealth.Unknown));
+            ProviderHealthList.Add(new ProviderHealthEntry(provider.ProviderName, provider.Kind, ProviderHealth.Unknown));
+        }
+
+        // Background probe loop for local HTTP providers — a free, every-15s reachability check
+        // that downgrades green → yellow when the daemon goes away mid-session. Fire-and-forget
+        // because the VM lives for the app lifetime; the loop terminates with the process.
+        if (httpProviders.Length > 0)
+        {
+            _ = RunHttpHealthProbeLoopAsync(httpProviders);
         }
     }
 
@@ -112,6 +122,44 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (entry is not null && entry.Health != ProviderHealth.NotFound)
         {
             entry.Health = health;
+        }
+    }
+
+    /// <summary>
+    /// Periodically probes each local HTTP provider's reachability and downgrades Authenticated →
+    /// Failed when the daemon disappears mid-session. We deliberately do not promote on probe
+    /// success — only the user's actual call success is authoritative for the green dot. We also
+    /// don't churn Unknown ↔ Failed via probes; that creates flicker on intermittent network blips.
+    /// </summary>
+    private async Task RunHttpHealthProbeLoopAsync(IReadOnlyList<IAiProvider> httpProviders)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(15));
+        while (await timer.WaitForNextTickAsync().ConfigureAwait(false))
+        {
+            foreach (var provider in httpProviders)
+            {
+                try
+                {
+                    var reachable = await provider.IsAvailableAsync().ConfigureAwait(false);
+                    if (!reachable)
+                    {
+                        var name = provider.ProviderName;
+                        await Dispatcher.UIThread.InvokeAsync(() =>
+                        {
+                            var entry = ProviderHealthList.FirstOrDefault(p => p.Name == name);
+                            if (entry is not null && entry.Health == ProviderHealth.Authenticated)
+                            {
+                                entry.Health = ProviderHealth.Failed;
+                                _log.Information("Probe found {Provider} unreachable; downgraded green → yellow", name);
+                            }
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log.Warning(ex, "Health probe for {Provider} threw", provider.ProviderName);
+                }
+            }
         }
     }
 

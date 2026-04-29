@@ -738,6 +738,22 @@
                                            FontSize="10.5"
                                            Foreground="{StaticResource MutedInkBrush}"
                                            VerticalAlignment="Center"/>
+                                <!-- LOCAL badge: differentiates LocalHttp providers (Ollama et al)
+                                     from CLI providers at a glance. IsVisible binds to a derived
+                                     bool on the entry so no value converter is needed. -->
+                                <Border IsVisible="{Binding IsLocal}"
+                                        Background="{StaticResource AccentSoftBrush}"
+                                        CornerRadius="2"
+                                        Padding="4,1"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="LOCAL"
+                                               FontFamily="{StaticResource BodySans}"
+                                               FontSize="8"
+                                               FontWeight="Bold"
+                                               LetterSpacing="0.8"
+                                               Foreground="{StaticResource AccentDeepBrush}"
+                                               VerticalAlignment="Center"/>
+                                </Border>
                             </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

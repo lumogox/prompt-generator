@@ -2,13 +2,13 @@ namespace PromptAssistant.App.ViewModels;
 
 public enum ProviderHealth
 {
-    /// <summary>CLI not found on PATH. Red. Permanent until user installs.</summary>
+    /// <summary>Provider unavailable (e.g. CLI binary missing from PATH). Red. Sticky for the session.</summary>
     NotFound,
-    /// <summary>CLI found but not yet verified (no operation tried yet). Yellow.</summary>
+    /// <summary>Provider registered but not yet exercised. Yellow.</summary>
     Unknown,
-    /// <summary>CLI found and last operation succeeded. Green.</summary>
+    /// <summary>Last operation succeeded. Green.</summary>
     Authenticated,
-    /// <summary>CLI found but last operation failed (auth, rate limit, etc). Yellow.</summary>
+    /// <summary>Last operation failed (auth, rate limit, daemon down, etc). Yellow.</summary>
     Failed,
 }
 

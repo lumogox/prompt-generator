@@ -86,14 +86,23 @@ public sealed partial class MainWindowViewModel : ObservableObject
         SelectedProvider = ProviderNames.FirstOrDefault();
         Sections = BuildSections();
 
-        // Three known CLIs. Initial health: NotFound (red) if missing from PATH, Unknown (yellow)
-        // if found but not yet exercised. Operations later promote to Authenticated (green) on success
-        // or Failed (yellow) on error — auth probing at startup is deliberately skipped because each
-        // probe is a billable API call.
+        // CLI providers: shown unconditionally so the user can see what's *not* installed (NotFound,
+        // red) vs. installed-but-unverified (Unknown, yellow). Auth probing at startup is deliberately
+        // skipped because each CLI probe is a billable API call.
         foreach (var name in new[] { "Gemini", "Claude Code", "Codex" })
         {
             var initial = providers.ContainsKey(name) ? ProviderHealth.Unknown : ProviderHealth.NotFound;
             ProviderHealthList.Add(new ProviderHealthEntry(name, initial));
+        }
+
+        // HTTP providers (e.g. Ollama): always registered regardless of daemon state, so the dot
+        // starts Unknown and flips to Authenticated/Failed on first execute. We don't probe at startup
+        // — even though a local HTTP probe is free, NotFound is sticky in MarkProviderHealth, so a
+        // probe-and-mark-red on a temporarily-stopped daemon would lock the dot red for the session.
+        // Yellow → resolves on first real call is the recoverable path.
+        foreach (var provider in providers.Values.Where(p => p.Kind == ProviderKind.LocalHttp))
+        {
+            ProviderHealthList.Add(new ProviderHealthEntry(provider.ProviderName, ProviderHealth.Unknown));
         }
     }
 

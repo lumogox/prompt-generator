@@ -46,19 +46,31 @@ Drop a rough idea into the **Build from idea** dialog and the selected CLI expan
 
 ### Refine
 
-The **Refine** button opens a lens picker. Choose one or more preset intents — *Tighten*, *More formal*, *More casual*, *More technical*, *Plain English*, *Strengthen rules*, *Strengthen examples* — add optional free-text guidance, and the CLI rewrites only the sections you have selected.
+<p align="center">
+  <img src="docs/screenshots/refine.png" alt="Refine lens dialog" width="560">
+</p>
 
-### Provider picker
+The **Refine** button opens the **Refine lens** dialog. Pick one or more preset lenses — *Tighten*, *More formal*, *More casual*, *More technical*, *Plain English*, *Strengthen rules*, *Strengthen examples* — add optional free-text guidance, and the CLI rewrites only the sections you have selected. Lenses combine freely; guidance is appended verbatim to the meta-prompt. Baseline polish (grammar, tighten, hallucination guards) always applies regardless of lens selection.
+
+### Provider picker & settings
 
 <p align="center">
   <img src="docs/screenshots/main-empty.png" alt="Prompt Engineering Assistant — empty state" width="900">
 </p>
 
-The provider dropdown at the top right lets you switch between installed CLIs per session. The status row at the bottom shows which are detected on your PATH:
+The provider dropdown at the top right switches between installed CLIs per session. The status row at the bottom shows which are detected on your PATH:
 
 `● Gemini` `● Claude Code` `● Codex`
 
 All CLIs run with hardcoded safety flags — they cannot edit files or take autonomous actions.
+
+**Settings** (top-right cog) lets you override the model each CLI uses via a form or directly as JSON — both write to the same `settings.json` file.
+
+<p align="center">
+  <img src="docs/screenshots/settings.png" alt="CLI Model Settings dialog" width="560">
+</p>
+
+Leave a field blank to let the CLI pick its own default. Changes take effect immediately for the next render — no restart required.
 
 ---
 

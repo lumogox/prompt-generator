@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\PromptAssistant.Core\PromptAssistant.Core.csproj" />
     <ProjectReference Include="..\PromptAssistant.Cli\PromptAssistant.Cli.csproj" />
+    <ProjectReference Include="..\PromptAssistant.Http\PromptAssistant.Http.csproj" />
     <ProjectReference Include="..\PromptAssistant.Persistence\PromptAssistant.Persistence.csproj" />
   </ItemGroup>
 </Project>

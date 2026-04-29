@@ -2,13 +2,15 @@ using PromptAssistant.Cli.Internal;
 
 namespace PromptAssistant.Cli.Providers;
 
-public sealed class ClaudeCodeCliProvider(string executablePath) : IAiCliProvider
+public sealed class ClaudeCodeCliProvider(string executablePath) : IAiProvider
 {
     private static readonly ILogger _log = Log.ForContext<ClaudeCodeCliProvider>();
 
     private readonly ProcessRunner _runner = new(executablePath);
 
     public string ProviderName => "Claude Code";
+
+    public ProviderKind Kind => ProviderKind.Cli;
 
     /// <summary>Override of the default model. Null/empty means "use the CLI's default".</summary>
     public string? Model { get; set; }

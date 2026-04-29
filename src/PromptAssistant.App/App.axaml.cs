@@ -10,6 +10,7 @@ using PromptAssistant.App.ViewModels;
 using PromptAssistant.App.Views;
 using PromptAssistant.Cli.Internal;
 using PromptAssistant.Cli.Providers;
+using PromptAssistant.Http.Providers;
 
 namespace PromptAssistant.App;
 
@@ -112,7 +113,7 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private static void ApplySettingsToProviders(IReadOnlyDictionary<string, IAiCliProvider> providers, AppSettings settings)
+    private static void ApplySettingsToProviders(IReadOnlyDictionary<string, IAiProvider> providers, AppSettings settings)
     {
         if (providers.TryGetValue("Gemini", out var gemini) && gemini is GeminiCliProvider g)
         {
@@ -132,9 +133,9 @@ public partial class App : Application
         }
     }
 
-    private static IReadOnlyDictionary<string, IAiCliProvider> DiscoverProviders(AppSettings settings)
+    private static IReadOnlyDictionary<string, IAiProvider> DiscoverProviders(AppSettings settings)
     {
-        var dict = new Dictionary<string, IAiCliProvider>();
+        var dict = new Dictionary<string, IAiProvider>();
 
         var gemini = CliDiscovery.Find("gemini");
         if (gemini is not null)

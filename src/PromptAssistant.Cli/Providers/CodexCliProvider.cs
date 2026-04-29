@@ -2,13 +2,15 @@ using PromptAssistant.Cli.Internal;
 
 namespace PromptAssistant.Cli.Providers;
 
-public sealed class CodexCliProvider(string executablePath) : IAiCliProvider
+public sealed class CodexCliProvider(string executablePath) : IAiProvider
 {
     private static readonly ILogger _log = Log.ForContext<CodexCliProvider>();
 
     private readonly ProcessRunner _runner = new(executablePath);
 
     public string ProviderName => "Codex";
+
+    public ProviderKind Kind => ProviderKind.Cli;
 
     /// <summary>Override of the default model. Null/empty means "use the CLI's default".</summary>
     public string? Model { get; set; }

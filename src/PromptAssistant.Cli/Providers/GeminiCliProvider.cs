@@ -2,13 +2,15 @@ using PromptAssistant.Cli.Internal;
 
 namespace PromptAssistant.Cli.Providers;
 
-public sealed class GeminiCliProvider(string executablePath) : IAiCliProvider
+public sealed class GeminiCliProvider(string executablePath) : IAiProvider
 {
     private static readonly ILogger _log = Log.ForContext<GeminiCliProvider>();
 
     private readonly ProcessRunner _runner = new(executablePath);
 
     public string ProviderName => "Gemini";
+
+    public ProviderKind Kind => ProviderKind.Cli;
 
     /// <summary>Override of the default model. Null/empty means "use the CLI's default".</summary>
     public string? Model { get; set; }

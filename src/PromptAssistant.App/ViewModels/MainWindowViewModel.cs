@@ -10,7 +10,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private static readonly ILogger _log = Log.ForContext<MainWindowViewModel>();
 
     private readonly IPromptRenderer _renderer;
-    private readonly IReadOnlyDictionary<string, IAiCliProvider> _providers;
+    private readonly IReadOnlyDictionary<string, IAiProvider> _providers;
     private readonly Func<string, Task>? _copyToClipboard;
     private readonly Func<Task<string?>>? _promptForIdea;
     private readonly Func<Task<RefineOptions?>>? _promptForRefineOptions;
@@ -66,7 +66,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public MainWindowViewModel(
         IPromptRenderer renderer,
-        IReadOnlyDictionary<string, IAiCliProvider> providers,
+        IReadOnlyDictionary<string, IAiProvider> providers,
         Func<string, Task>? copyToClipboard = null,
         Func<Task<string?>>? promptForIdea = null,
         string? logDirectory = null,

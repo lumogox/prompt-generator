@@ -3,13 +3,13 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json.Nodes;
 
-namespace PromptAssistant.Cli.Providers;
+namespace PromptAssistant.Http.Providers;
 
 /// <summary>
 /// HTTP-based provider that talks to a local Ollama daemon. Unlike the CLI providers, this one has
 /// no executable on PATH — availability is decided by whether the daemon answers on its REST port.
 /// </summary>
-public sealed class OllamaProvider : IAiCliProvider, IDisposable
+public sealed class OllamaProvider : IAiProvider, IDisposable
 {
     public const string DefaultBaseUrl = "http://localhost:11434";
     public const string DefaultModel = "llama3";
@@ -26,6 +26,8 @@ public sealed class OllamaProvider : IAiCliProvider, IDisposable
     }
 
     public string ProviderName => "Ollama";
+
+    public ProviderKind Kind => ProviderKind.LocalHttp;
 
     /// <summary>Override of the default model. Null/empty means "use llama3".</summary>
     public string? Model { get; set; }

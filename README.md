@@ -1,36 +1,68 @@
-# Prompt Assistant
+# Prompt Engineering Assistant
 
-A native desktop app for crafting high-quality AI prompts using Anthropic's canonical 10-part prompt structure. Fill in the sections that matter, generate with your locally-installed AI CLI, and iterate — all without leaving your machine.
+**A native desktop workbench for Anthropic's 10-part prompt structure.**  
+Fill in the sections that matter, generate with your local AI CLI, and iterate — no API keys, no cloud, no data leaving your machine.
 
-<!-- Screenshot -->
-<!-- ↓ Replace this comment with your app screenshot ↓ -->
+<p align="center">
+  <img src="docs/screenshots/main-filled.png" alt="Prompt Engineering Assistant — main window" width="900">
+</p>
+
+The split-pane layout keeps your **COMPOSE** form on the left and the live **ASSEMBLED PROMPT** on the right. A colour-coded preview shows every section at a glance; a token counter tracks length in real time. When you're happy, hit **Render →** and the prompt is sent to whichever CLI you have installed.
 
 ---
 
-## What it does
+## Features
 
-Prompt Assistant interviews you through Anthropic's 10-section prompt template and assembles a well-structured prompt for you:
+### 10-section prompt structure
 
 | # | Section | Purpose |
 |---|---|---|
-| 1 | Task context | Who the model is and why it exists |
-| 2 | Tone & style | How it should communicate |
-| 3 | Background data | Reference material to ground the response |
-| 4 | Task rules | Constraints and guardrails |
-| 5 | Examples | Few-shot demonstrations |
-| 6 | Conversation history | Prior turns, if any |
-| 7 | Immediate task | The actual request |
-| 8 | Step-by-step | Chain-of-thought toggle |
-| 9 | Output formatting | Structure, length, format |
+| 01 | Task context | Who the AI is and what its high-level goal is |
+| 02 | Tone context | Voice, register, and formality |
+| 03 | Background data | Reference material to ground the response |
+| 04 | Detailed task & rules | Constraints, guardrails, anti-hallucination rules |
+| 05 | Examples | Few-shot demonstrations |
+| 06 | Conversation history | Prior turns, if any |
+| 07 | Immediate request | The actual task |
+| 08 | Step-by-step | Chain-of-thought toggle |
+| 09 | Output formatting | Structure, length, and format |
 | 10 | Assistant prefill | Partial response to continue from |
 
-You choose which sections the AI generates for you, refine with preset lenses (Tighten, More formal, More technical, etc.), or build from a raw idea. The assembled prompt is sent to whichever CLI you have installed.
+Optional sections (Background, Examples) include an **Include in prompt** toggle — leave them empty and they're omitted automatically.
+
+### Generate sections
+
+The **GENERATE SECTIONS** strip lets you pick which sections the AI fills in for you. Toggle individual chips or use **All / Clear** to target exactly what needs work:
+
+> `01 Task context` `02 Tone` `03 Background` `04 Rules` `05 Examples` `07 Request` `09 Output format` `10 Prefill`
+
+### Build from idea
+
+<p align="center">
+  <img src="docs/screenshots/build-from-idea.png" alt="Build from idea dialog" width="560">
+</p>
+
+Drop a rough idea into the **Build from idea** dialog and the selected CLI expands it into the full 10-part structure — refined and ready to review. Type a sentence, get a complete prompt.
+
+### Refine
+
+The **Refine** button opens a lens picker. Choose one or more preset intents — *Tighten*, *More formal*, *More casual*, *More technical*, *Plain English*, *Strengthen rules*, *Strengthen examples* — add optional free-text guidance, and the CLI rewrites only the sections you have selected.
+
+### Provider picker
+
+<p align="center">
+  <img src="docs/screenshots/main-empty.png" alt="Prompt Engineering Assistant — empty state" width="900">
+</p>
+
+The provider dropdown at the top right lets you switch between installed CLIs per session. The status row at the bottom shows which are detected on your PATH:
+
+`● Gemini` `● Claude Code` `● Codex`
+
+All CLIs run with hardcoded safety flags — they cannot edit files or take autonomous actions.
 
 ---
 
 ## Supported AI CLIs
-
-The app shells out to locally-installed CLIs — no API keys, no network calls from the app itself.
 
 | CLI | Install |
 |---|---|
@@ -38,13 +70,13 @@ The app shells out to locally-installed CLIs — no API keys, no network calls f
 | **Gemini CLI** | `npm install -g @google/gemini-cli` |
 | **Codex CLI** | `npm install -g @openai/codex` |
 
-Any combination works. The app detects which ones are on your PATH and lets you pick per session.
+Any combination works. The app detects whichever are on your PATH at launch.
 
 ---
 
 ## Installation
 
-Download the latest release for your platform from the [Releases](../../releases) page.
+Download the latest release from the [Releases](../../releases) page.
 
 | Platform | File | How to install |
 |---|---|---|
@@ -52,9 +84,9 @@ Download the latest release for your platform from the [Releases](../../releases
 | **Windows** (x64) | `PromptAssistant-*-win-x64.zip` | Extract → run `PromptAssistant.Desktop.exe` |
 | **Linux** (x64) | `PromptAssistant-*-linux-x64.tar.gz` | `tar -xzf <file>` → run `./PromptAssistant.Desktop` |
 
-> **macOS first launch:** right-click the app → Open (unsigned bundle — one-time Gatekeeper bypass).  
+> **macOS first launch:** right-click the app → Open (unsigned — one-time Gatekeeper bypass).  
 > **Windows first launch:** SmartScreen may warn — click **More info** → **Run anyway**.  
-> **Linux prerequisites:** `libX11`, `libGL`, and `libfontconfig` must be present (pre-installed on all standard desktop distros).
+> **Linux prerequisites:** `libX11`, `libGL`, and `libfontconfig` must be present (standard on all desktop distros).
 
 ---
 
@@ -95,10 +127,10 @@ Output lands in `artifacts/`.
 ## Releasing a new version
 
 1. Bump `<Version>` in [`Directory.Build.props`](Directory.Build.props).
-2. Open a PR — write a meaningful description (it becomes the changelog).
+2. Open a PR with a meaningful description.
 3. Merge to `main`.
 
-The [release workflow](.github/workflows/release.yml) picks up the version change, builds for all three platforms in parallel, and publishes a GitHub Release with the artifacts attached automatically.
+The [release workflow](.github/workflows/release.yml) detects the version change, builds for all three platforms in parallel on native runners, and publishes a GitHub Release with all three artifacts attached automatically.
 
 Pre-releases: any version containing a hyphen (e.g. `1.1.0-beta.1`) is published as a GitHub pre-release and does not replace **latest**.
 
@@ -110,9 +142,9 @@ Pre-releases: any version containing a hyphen (e.g. `1.1.0-beta.1`) is published
 src/
   PromptAssistant.Core/        # Domain models, prompt renderer — no I/O
   PromptAssistant.Cli/         # Process interop with AI CLIs
-  PromptAssistant.Persistence/ # SQLite history (Microsoft.Data.Sqlite)
+  PromptAssistant.Persistence/ # SQLite session history
   PromptAssistant.App/         # Avalonia UI — views, view models, styles
-  PromptAssistant.Desktop/     # Entry point (top-level statements)
+  PromptAssistant.Desktop/     # Entry point
 scripts/
   publish-mac.sh               # → artifacts/dmg/*.dmg
   publish-windows.ps1          # → artifacts/zip/*.zip

@@ -21,4 +21,13 @@ public abstract partial class SectionViewModelBase(
     private bool _isIncluded = true;
 
     public abstract PromptSection ToSection();
+
+    /// <summary>
+    /// Resets this section to its initial (post-construction) state. Subclasses extend to clear
+    /// their own user-entered content. Called by the VM's Clear All action.
+    /// </summary>
+    public virtual void Reset()
+    {
+        IsIncluded = true;
+    }
 }

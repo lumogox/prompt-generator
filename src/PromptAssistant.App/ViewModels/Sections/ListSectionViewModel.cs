@@ -41,6 +41,12 @@ public sealed partial class ListSectionViewModel(
             _ => $"User: {user}\nAssistant: {assistant}",
         };
     }
+
+    public override void Reset()
+    {
+        base.Reset();
+        Items.Clear();
+    }
 }
 
 public sealed partial class ListItemViewModel : ObservableObject

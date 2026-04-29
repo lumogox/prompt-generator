@@ -17,6 +17,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
     private readonly Func<Task<RefineOptions?>>? _promptForRefineOptions;
     private readonly Func<Task>? _openSettings;
     private readonly Func<string, string, Task<bool>>? _saveMarkdown;
+    private readonly Func<Task<bool>>? _confirmClearAll;
     private readonly string? _logDirectory;
     private readonly Lock _sendLock = new();
 
@@ -73,7 +74,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
         string? logDirectory = null,
         Func<Task>? openSettings = null,
         Func<string, string, Task<bool>>? saveMarkdown = null,
-        Func<Task<RefineOptions?>>? promptForRefineOptions = null)
+        Func<Task<RefineOptions?>>? promptForRefineOptions = null,
+        Func<Task<bool>>? confirmClearAll = null)
     {
         _renderer = renderer;
         _providers = providers;
@@ -83,6 +85,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _logDirectory = logDirectory;
         _openSettings = openSettings;
         _saveMarkdown = saveMarkdown;
+        _confirmClearAll = confirmClearAll;
         ProviderNames = [.. providers.Keys];
         SelectedProvider = ProviderNames.FirstOrDefault();
         Sections = BuildSections();
@@ -181,6 +184,38 @@ public sealed partial class MainWindowViewModel : ObservableObject
             _log.Error(ex, "Settings dialog failed");
             StatusMessage = $"Could not open settings: {ex.Message}";
         }
+    }
+
+    /// <summary>
+    /// Wipes all user-entered content and rendered output — a "new prompt from scratch" action.
+    /// Provider selection, generation-target checkboxes, and settings are deliberately preserved
+    /// (those are workflow preferences, not content). Asks for confirmation first because the
+    /// reset is not undoable.
+    /// </summary>
+    [RelayCommand]
+    private async Task ClearAllAsync()
+    {
+        if (_confirmClearAll is not null)
+        {
+            var confirmed = await _confirmClearAll();
+            if (!confirmed) return;
+        }
+
+        foreach (var section in Sections)
+        {
+            section.Reset();
+        }
+
+        RenderedSections.Clear();
+        RenderedPrompt = "";
+        RenderedAssistantPrefill = null;
+        HasRenderedOutput = false;
+        TokenSummary = "";
+        StatusMessage = "";
+        OperationStatus = "Idle";
+        _lastTokenCount = null;
+
+        _log.Information("Clear all: reset {SectionCount} sections + output", Sections.Count);
     }
 
     [RelayCommand]

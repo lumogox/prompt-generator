@@ -40,4 +40,10 @@ public sealed partial class FreeTextSectionViewModel : SectionViewModelBase
         {
             IsIncluded = IsIncluded,
         };
+
+    public override void Reset()
+    {
+        base.Reset();
+        Content = "";
+    }
 }

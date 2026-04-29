@@ -10,9 +10,19 @@ public sealed partial class ToggleSectionViewModel(
 {
     public string CanonicalText { get; } = canonicalText;
 
+    // Captured explicitly so Reset() can refer to it without triggering CS9124 (primary-ctor
+    // parameter cannot be both field-initializer and captured-into-method-body in the same class).
+    private readonly bool _defaultEnabled = defaultEnabled;
+
     [ObservableProperty]
     private bool _enabled = defaultEnabled;
 
     public override PromptSection ToSection() =>
         new ToggleSection(Kind, Enabled, CanonicalText);
+
+    public override void Reset()
+    {
+        base.Reset();
+        Enabled = _defaultEnabled;
+    }
 }

@@ -1,0 +1,49 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PromptAssistant.App.Views.ConfirmationDialog"
+        Title="Confirm"
+        Width="460" Height="220"
+        MinWidth="380" MinHeight="200"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Margin="32">
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0"
+                   Name="HeaderText"
+                   FontFamily="{StaticResource DisplaySerif}"
+                   FontSize="20"
+                   FontWeight="Medium"
+                   Foreground="{StaticResource InkBrush}"
+                   Margin="0,0,0,12"/>
+
+        <!-- Message -->
+        <TextBlock Grid.Row="1"
+                   Name="MessageText"
+                   FontFamily="{StaticResource DisplaySerif}"
+                   FontSize="13.5"
+                   FontStyle="Italic"
+                   Foreground="{StaticResource MutedInkBrush}"
+                   TextWrapping="Wrap"
+                   LineHeight="20"
+                   VerticalAlignment="Top"/>
+
+        <!-- Footer -->
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="10"
+                    Margin="0,18,0,0">
+            <Button Classes="outline"
+                    Name="CancelButton"
+                    Content="Cancel"
+                    Click="OnCancel"/>
+            <Button Classes="primary"
+                    Name="ConfirmButton"
+                    IsDefault="True"
+                    Click="OnConfirm"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -440,6 +440,12 @@
                                     Command="{Binding RefineCommand}"
                                     IsEnabled="{Binding !IsSending}"
                                     Padding="14,5"/>
+                            <Button Classes="ghost"
+                                    Content="↻ Clear all"
+                                    ToolTip.Tip="Wipe every section and the rendered output — start a fresh prompt. Provider selection and settings are preserved. Confirmation required."
+                                    Command="{Binding ClearAllCommand}"
+                                    IsEnabled="{Binding !IsSending}"
+                                    Padding="14,5"/>
                         </StackPanel>
                         <TextBlock Text="COMPOSE"
                                    FontFamily="{StaticResource BodySans}"

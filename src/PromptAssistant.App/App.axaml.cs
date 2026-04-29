@@ -57,11 +57,31 @@ public partial class App : Application
                 return await dialog.ShowDialog<TResult?>(window);
             }
 
+            // Variant for value-type results (bool? from confirmation dialogs) — the constraint
+            // on ShowWithScrim above is `where TResult : class`, which excludes bool. Mirror the
+            // scrim-toggle behaviour so destructive-action dialogs get the same blur/dim treatment.
+            async Task<bool> ShowConfirmation(ConfirmationDialog dialog)
+            {
+                if (window.DataContext is MainWindowViewModel vm)
+                {
+                    vm.IsModalActive = true;
+                    try { return await dialog.ShowDialog<bool>(window); }
+                    finally { vm.IsModalActive = false; }
+                }
+                return await dialog.ShowDialog<bool>(window);
+            }
+
             async Task<string?> PromptForIdea() =>
                 await ShowWithScrim<string>(new BuildFromIdeaDialog());
 
             async Task<RefineOptions?> PromptForRefineOptions() =>
                 await ShowWithScrim<RefineOptions>(new RefineDialog());
+
+            async Task<bool> ConfirmClearAll() =>
+                await ShowConfirmation(new ConfirmationDialog(
+                    header: "Clear all sections?",
+                    message: "All section content and rendered output will be wiped. Provider selection and settings are preserved. This cannot be undone.",
+                    confirmLabel: "Clear all"));
 
             async Task OpenSettings()
             {
@@ -106,7 +126,7 @@ public partial class App : Application
             var logDirectory = System.IO.Path.Combine(appDataDir, "logs");
 
             window.DataContext = new MainWindowViewModel(
-                renderer, providers, CopyToClipboard, PromptForIdea, logDirectory, OpenSettings, SaveMarkdown, PromptForRefineOptions);
+                renderer, providers, CopyToClipboard, PromptForIdea, logDirectory, OpenSettings, SaveMarkdown, PromptForRefineOptions, ConfirmClearAll);
             desktop.MainWindow = window;
         }
 

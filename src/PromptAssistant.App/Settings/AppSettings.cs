@@ -9,11 +9,15 @@ public sealed class AppSettings
     public string? GeminiModel { get; set; }
     public string? ClaudeModel { get; set; }
     public string? CodexModel { get; set; }
+    public string? OllamaModel { get; set; }
+    public string? OllamaBaseUrl { get; set; }
 
     public AppSettings Clone() => new()
     {
         GeminiModel = GeminiModel,
         ClaudeModel = ClaudeModel,
         CodexModel = CodexModel,
+        OllamaModel = OllamaModel,
+        OllamaBaseUrl = OllamaBaseUrl,
     };
 }

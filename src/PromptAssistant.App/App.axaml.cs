@@ -25,15 +25,16 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var renderer = new AnthropicPromptRenderer();
-            var providers = DiscoverProviders();
             var window = new MainWindow();
 
-            // Settings: load and apply to providers immediately so the first call uses the right model.
+            // Settings: load BEFORE discovering providers so Ollama can pick up its base URL.
             var appDataDir = System.IO.Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                 "PromptAssistant");
             var settingsStore = new SettingsStore(System.IO.Path.Combine(appDataDir, "settings.json"));
             var settings = settingsStore.Load();
+
+            var providers = DiscoverProviders(settings);
             ApplySettingsToProviders(providers, settings);
 
             async Task CopyToClipboard(string text)
@@ -71,6 +72,8 @@ public partial class App : Application
                 settings.GeminiModel = result.GeminiModel;
                 settings.ClaudeModel = result.ClaudeModel;
                 settings.CodexModel = result.CodexModel;
+                settings.OllamaModel = result.OllamaModel;
+                settings.OllamaBaseUrl = result.OllamaBaseUrl;
                 ApplySettingsToProviders(providers, result);
             }
 
@@ -123,9 +126,13 @@ public partial class App : Application
         {
             x.Model = settings.CodexModel;
         }
+        if (providers.TryGetValue("Ollama", out var ollama) && ollama is OllamaProvider o)
+        {
+            o.Model = settings.OllamaModel;
+        }
     }
 
-    private static IReadOnlyDictionary<string, IAiCliProvider> DiscoverProviders()
+    private static IReadOnlyDictionary<string, IAiCliProvider> DiscoverProviders(AppSettings settings)
     {
         var dict = new Dictionary<string, IAiCliProvider>();
 
@@ -146,6 +153,10 @@ public partial class App : Application
         {
             dict["Codex"] = new CodexCliProvider(codex);
         }
+
+        // Ollama is HTTP-based — no PATH lookup. Always register; the footer health dot reflects
+        // whether the daemon is actually reachable.
+        dict["Ollama"] = new OllamaProvider(settings.OllamaBaseUrl);
 
         return dict;
     }

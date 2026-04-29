@@ -45,6 +45,8 @@ public partial class SettingsDialog : Window
         Field("GeminiInput").Text = settings.GeminiModel ?? "";
         Field("ClaudeInput").Text = settings.ClaudeModel ?? "";
         Field("CodexInput").Text = settings.CodexModel ?? "";
+        Field("OllamaInput").Text = settings.OllamaModel ?? "";
+        Field("OllamaUrlInput").Text = settings.OllamaBaseUrl ?? "";
         _suppressSync = false;
     }
 
@@ -108,6 +110,8 @@ public partial class SettingsDialog : Window
         GeminiModel = NullIfEmpty(Field("GeminiInput").Text),
         ClaudeModel = NullIfEmpty(Field("ClaudeInput").Text),
         CodexModel = NullIfEmpty(Field("CodexInput").Text),
+        OllamaModel = NullIfEmpty(Field("OllamaInput").Text),
+        OllamaBaseUrl = NullIfEmpty(Field("OllamaUrlInput").Text),
     };
 
     private static string? NullIfEmpty(string? s) =>

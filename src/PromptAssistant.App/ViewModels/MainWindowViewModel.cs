@@ -940,9 +940,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         if (firstBrace < 0 || lastBrace <= firstBrace) return null;
 
         var json = responseText[firstBrace..(lastBrace + 1)];
+        GeneratedTemplate? parsed;
         try
         {
-            return JsonSerializer.Deserialize<GeneratedTemplate>(json, new JsonSerializerOptions
+            parsed = JsonSerializer.Deserialize<GeneratedTemplate>(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
             });
@@ -951,7 +952,33 @@ public sealed partial class MainWindowViewModel : ObservableObject
         {
             return null;
         }
+
+        if (parsed is null) return null;
+
+        // The prompt instructs models to use literal `\n` between bullet points to keep the JSON shape
+        // stable. After deserialization those arrive as the two-character sequence \n (backslash + n)
+        // rather than a real newline, so we normalize once here so every downstream renderer sees real
+        // line breaks. Cheap and benefits all providers, not just Ollama.
+        return new GeneratedTemplate
+        {
+            TaskContext = NormalizeNewlines(parsed.TaskContext),
+            ToneContext = NormalizeNewlines(parsed.ToneContext),
+            BackgroundData = NormalizeNewlines(parsed.BackgroundData),
+            TaskRules = NormalizeNewlines(parsed.TaskRules),
+            Examples = [.. parsed.Examples.Select(e => new GeneratedExample
+            {
+                User = NormalizeNewlines(e.User),
+                Assistant = NormalizeNewlines(e.Assistant),
+            })],
+            ConversationHistory = NormalizeNewlines(parsed.ConversationHistory),
+            ImmediateRequest = NormalizeNewlines(parsed.ImmediateRequest),
+            StepByStep = parsed.StepByStep,
+            OutputFormatting = NormalizeNewlines(parsed.OutputFormatting),
+            AssistantPrefill = NormalizeNewlines(parsed.AssistantPrefill),
+        };
     }
+
+    private static string NormalizeNewlines(string s) => s.Replace("\\n", "\n");
 
     private void ApplyGeneratedTemplate(GeneratedTemplate t, IReadOnlyList<SectionKind> selectedKinds)
     {
